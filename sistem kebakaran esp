@@ -1,0 +1,75 @@
+#define BLYNK_TEMPLATE_ID "YourTemplateID"
+#define BLYNK_TEMPLATE_NAME "FireDetector"
+#define BLYNK_AUTH_TOKEN "YourAuthToken"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <DHT.h>
+
+// WiFi credentials
+char ssid[] = "YourWiFiSSID";
+char pass[] = "YourWiFiPassword";
+
+// DHT Configuration
+#define DHTPIN D3  // GPIO0
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// Sensor & Output Pin
+#define FLAME_SENSOR_PIN D2  
+#define BUZZER_PIN D4
+#define LED_PIN D5
+
+BlynkTimer timer;
+
+void sendSensorData() {
+  float temp = dht.readTemperature();
+  int flame = digitalRead(FLAME_SENSOR_PIN);
+  bool fireDetected = (flame == LOW || temp > 50);
+
+  Blynk.virtualWrite(V0, temp);                  
+  Blynk.virtualWrite(V1, flame == LOW ? 1 : 0);
+  Blynk.virtualWrite(V2, fireDetected ? 1 : 0); 
+
+  Serial.print("Temp: "); Serial.print(temp);
+  Serial.print(" C | Flame: "); Serial.println(flame == LOW ? "YES" : "NO");
+
+  if (fireDetected) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
+  } else {
+    digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(LED_PIN, LOW);
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(FLAME_SENSOR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+
+  digitalWrite(BUZZER_PIN, LOW);
+  digitalWrite(LED_PIN, LOW);
+
+  dht.begin();
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+  timer.setInterval(2000L, sendSensorData);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
+
+
+
+
+
+//notifikasi push
+if (fireDetected) {
+  Blynk.logEvent("fire_alert", "Kebakaran Terdeteksi!");
+}
