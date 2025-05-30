@@ -1,0 +1,40 @@
+#include <DHT.h>
+
+#define DHTPIN 3
+#define DHTTYPE DHT11
+#define FLAME_SENSOR_PIN 2
+#define BUZZER_PIN 4
+#define LED_PIN 5
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(FLAME_SENSOR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  dht.begin();
+  
+  digitalWrite(BUZZER_PIN, LOW);
+  digitalWrite(LED_PIN, LOW);
+}
+
+void loop() {
+  int flameValue = digitalRead(FLAME_SENSOR_PIN);
+  float temperature = dht.readTemperature();
+
+  Serial.print("Flame: ");
+  Serial.print(flameValue);
+  Serial.print(" | Temp: ");
+  Serial.println(temperature);
+
+  if (flameValue == LOW || temperature > 50) {
+    digitalWrite(BUZZER_PIN, HIGH); 
+    digitalWrite(LED_PIN, HIGH);   
+  } else {
+    digitalWrite(BUZZER_PIN, LOW); 
+    digitalWrite(LED_PIN, LOW);  
+  }
+
+  delay(1000);
+}
